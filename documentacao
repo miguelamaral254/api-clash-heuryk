@@ -1,0 +1,155 @@
+Aqui está a documentação detalhada com os exemplos de uso e payloads de retorno para cada endpoint:
+
+⸻
+
+BattleAnalyticsController Documentation
+
+1. Calcule a porcentagem de vitórias e derrotas utilizando a carta X (parâmetro) ocorridas em um intervalo de timestamps (parâmetro).
+
+Endpoint:
+
+GET /api/analytics/win-loss-percentage
+
+Parâmetros:
+	•	card (String): O nome da carta que será analisada. Exemplo: Fireball
+	•	start (Instant): Data de início do intervalo de tempo para a pesquisa. Formato: 2025-01-01T00:00:00Z
+	•	end (Instant): Data de fim do intervalo de tempo para a pesquisa. Formato: 2025-12-31T23:59:59Z
+
+Exemplo de Requisição:
+
+{{base_url}}/api/analytics/win-loss-percentage?card=Fireball&start=2025-01-01T00:00:00Z&end=2025-12-31T23:59:59Z
+
+Exemplo de Payload de Retorno:
+
+{
+  "card": "Fireball",
+  "winPercentage": 65.2,
+  "lossPercentage": 34.8
+}
+
+
+
+⸻
+
+2. Liste os decks completos que produziram mais de X% (parâmetro) de vitórias ocorridas em um intervalo de timestamps (parâmetro).
+
+Endpoint:
+
+GET /api/analytics/winning-decks
+
+Parâmetros:
+	•	percentage (double): A porcentagem mínima de vitórias que um deck deve ter para ser incluído na lista. Exemplo: 70
+	•	start (Instant): Data de início do intervalo de tempo para a pesquisa. Exemplo: 2025-01-01T00:00:00Z
+	•	end (Instant): Data de fim do intervalo de tempo para a pesquisa. Exemplo: 2025-12-31T23:59:59Z
+
+Exemplo de Requisição:
+
+{{base_url}}/api/analytics/winning-decks?percentage=70&start=2025-01-01T00:00:00Z&end=2025-12-31T23:59:59Z
+
+Exemplo de Payload de Retorno:
+
+{
+  "decks": [
+    {
+      "deckName": "Fireball + Hog Rider",
+      "winPercentage": 72.5
+    },
+    {
+      "deckName": "Golem + Tornado",
+      "winPercentage": 71.3
+    }
+  ]
+}
+
+
+
+⸻
+
+3. Calcule a quantidade de derrotas utilizando o combo de cartas (X1, X2, …) (parâmetro) ocorridas em um intervalo de timestamps (parâmetro).
+
+Endpoint:
+
+GET /api/analytics/defeats-by-combo
+
+Parâmetros:
+	•	cards (List): Uma lista contendo os nomes das cartas que formam o combo a ser analisado. Exemplo: Fireball, Hog Rider, Musketeer
+	•	start (Instant): Data de início do intervalo de tempo para a pesquisa. Exemplo: 2025-01-01T00:00:00Z
+	•	end (Instant): Data de fim do intervalo de tempo para a pesquisa. Exemplo: 2025-12-31T23:59:59Z
+
+Exemplo de Requisição:
+
+{{base_url}}/api/analytics/defeats-by-combo?cards=Fireball&cards=Hog%20Rider&cards=Musketeer&start=2025-01-01T00:00:00Z&end=2025-12-31T23:59:59Z
+
+Exemplo de Payload de Retorno:
+
+{
+  "combo": ["Fireball", "Hog Rider", "Musketeer"],
+  "defeatCount": 123
+}
+
+
+
+⸻
+
+4. Calcule a quantidade de vitórias envolvendo a carta X (parâmetro) nos casos em que o vencedor possui Z% (parâmetro) menos troféus do que o perdedor, a partida durou menos de 2 minutos, e o perdedor derrubou ao menos duas torres do adversário.
+
+Endpoint:
+
+GET /api/analytics/special-victories
+
+Parâmetros:
+	•	card (String): O nome da carta que será analisada para vitórias. Exemplo: Fireball
+	•	trophyDiffPercent (double): A porcentagem de diferença de troféus entre o vencedor e o perdedor. Exemplo: 10
+	•	start (Instant): Data de início do intervalo de tempo para a pesquisa. Exemplo: 2025-01-01T00:00:00Z
+	•	end (Instant): Data de fim do intervalo de tempo para a pesquisa. Exemplo: 2025-12-31T23:59:59Z
+
+Exemplo de Requisição:
+
+{{base_url}}/api/analytics/special-victories?card=Fireball&trophyDiffPercent=10&start=2025-01-01T00:00:00Z&end=2025-12-31T23:59:59Z
+
+Exemplo de Payload de Retorno:
+
+{
+  "card": "Fireball",
+  "specialVictories": 45
+}
+
+
+
+⸻
+
+5. Liste o combo de cartas (ex: carta 1, carta 2, carta 3… carta n) de maior taxa de vitórias, com base em um limite mínimo de taxa de vitórias (parâmetro) ocorridas em um intervalo de timestamps (parâmetro).
+
+Endpoint:
+
+GET /api/analytics/winning-combos
+
+Parâmetros:
+	•	comboSize (int): O número de cartas no combo que será analisado. Exemplo: 3
+	•	winRateThreshold (double): A taxa mínima de vitórias exigida para o combo ser incluído na lista. Exemplo: 60
+	•	start (Instant): Data de início do intervalo de tempo para a pesquisa. Exemplo: 2025-01-01T00:00:00Z
+	•	end (Instant): Data de fim do intervalo de tempo para a pesquisa. Exemplo: 2025-12-31T23:59:59Z
+
+Exemplo de Requisição:
+
+{{base_url}}/api/analytics/winning-combos?comboSize=3&winRateThreshold=60&start=2025-01-01T00:00:00Z&end=2025-12-31T23:59:59Z
+
+Exemplo de Payload de Retorno:
+
+{
+  "winningCombos": [
+    {
+      "combo": ["Fireball", "Hog Rider", "Musketeer"],
+      "winRate": 65.4
+    },
+    {
+      "combo": ["Golem", "Tornado", "Lightning"],
+      "winRate": 61.2
+    }
+  ]
+}
+
+
+
+⸻
+
