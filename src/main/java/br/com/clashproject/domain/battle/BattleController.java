@@ -54,4 +54,33 @@ public class BattleController {
         long defeats = battleService.calculateDefeatsByCardCombo(start, end, cardCombo);
         return ResponseEntity.ok(defeats);
     }
+
+    @GetMapping("/victories")
+    public ResponseEntity<Long> getVictoriesWithConditions(
+            @RequestParam String start,
+            @RequestParam String end,
+            @RequestParam List<String> cardCombo,
+            @RequestParam int trophyPercentage) {
+
+        long victories = battleService.calculateVictoriesWithConditions(start, end, cardCombo, trophyPercentage);
+        return ResponseEntity.ok(victories);
+    }
+    @GetMapping("/combo-stats")
+    public ResponseEntity<List<ComboStats>> getComboStats(
+            @RequestParam String start,
+            @RequestParam String end,
+            @RequestParam(defaultValue = "8") int deckSize,
+            @RequestParam(defaultValue = "4") int comboSize,
+            @RequestParam(defaultValue = "50") double minWinPercentage) {
+
+        List<ComboStats> stats = battleService.getComboStats(
+                start,
+                end,
+                deckSize,
+                comboSize,
+                minWinPercentage
+        );
+        return ResponseEntity.ok(stats);
+    }
+
 }

@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -111,5 +112,46 @@ public class BattleService {
 
         return battleRepository.countDefeatsByCardComboAndTimestampRange(startDate, endDate, cardCombo);
     }
+
+    public long calculateVictoriesWithConditions(String start, String end, List<String> cardCombo, int trophyPercentage) {
+        Date startDate = Date.from(Instant.parse(start));
+        Date endDate = Date.from(Instant.parse(end));
+
+        List<Long> result = battleRepository.countVictoriesWithConditions(startDate, endDate, cardCombo, trophyPercentage);
+
+        if (result != null && !result.isEmpty()) {
+            return result.get(0);
+        }
+
+        return 0;
+    }
+
+    public List<ComboStats> getComboStats(String start, String end, int deckSize, int comboSize, double minWinPercentage) {
+        try {
+            Date startDate = Date.from(Instant.parse(start));
+            Date endDate = Date.from(Instant.parse(end));
+
+            if (comboSize <= 0 || comboSize > 8) {
+                throw new IllegalArgumentException("O tamanho do combo deve estar entre 1 e 8");
+            }
+
+            if (minWinPercentage < 0 || minWinPercentage > 100) {
+                throw new IllegalArgumentException("A porcentagem mínima de vitórias deve estar entre 0 e 100");
+            }
+
+            return battleRepository.findComboStats(
+                    startDate,
+                    endDate,
+                    deckSize,
+                    comboSize,
+                    minWinPercentage
+            );
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("Formato de data inválido. Use o formato ISO-8601 (ex: 2025-04-11T00:00:00Z)");
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao calcular estatísticas de combos: " + e.getMessage(), e);
+        }
+    }
+
 
 }
