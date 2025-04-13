@@ -1,0 +1,15 @@
+/Users/miguelamaral/Documents/dev/api-clash-heuryk/src/main/java/br/com/clashproject/core/BaseMapper.java
+/Users/miguelamaral/Documents/dev/api-clash-heuryk/src/main/java/br/com/clashproject/domain/entities/Player.java
+/Users/miguelamaral/Documents/dev/api-clash-heuryk/src/main/java/br/com/clashproject/domain/BattleService.java
+/Users/miguelamaral/Documents/dev/api-clash-heuryk/src/main/java/br/com/clashproject/domain/dtos/DeckStats.java
+/Users/miguelamaral/Documents/dev/api-clash-heuryk/src/main/java/br/com/clashproject/ClashProjectApplication.java
+/Users/miguelamaral/Documents/dev/api-clash-heuryk/src/main/java/br/com/clashproject/domain/BattleController.java
+/Users/miguelamaral/Documents/dev/api-clash-heuryk/src/main/java/br/com/clashproject/domain/BattleRepository.java
+/Users/miguelamaral/Documents/dev/api-clash-heuryk/src/main/java/br/com/clashproject/domain/dtos/PlayerDTO.java
+/Users/miguelamaral/Documents/dev/api-clash-heuryk/src/main/java/br/com/clashproject/domain/dtos/ComboStats.java
+/Users/miguelamaral/Documents/dev/api-clash-heuryk/src/main/java/br/com/clashproject/domain/dtos/DeckWinRateDTO.java
+/Users/miguelamaral/Documents/dev/api-clash-heuryk/src/main/java/br/com/clashproject/domain/dtos/DeckEntry.java
+/Users/miguelamaral/Documents/dev/api-clash-heuryk/src/main/java/br/com/clashproject/domain/dtos/BattleCreateDTO.java
+/Users/miguelamaral/Documents/dev/api-clash-heuryk/src/main/java/br/com/clashproject/domain/BattleMapper.java
+/Users/miguelamaral/Documents/dev/api-clash-heuryk/src/main/java/br/com/clashproject/domain/dtos/BattleStats.java
+/Users/miguelamaral/Documents/dev/api-clash-heuryk/src/main/java/br/com/clashproject/domain/entities/Battle.java
