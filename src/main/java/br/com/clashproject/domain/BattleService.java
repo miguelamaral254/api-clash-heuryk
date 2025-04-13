@@ -63,69 +63,78 @@ public class BattleService {
     }
 
     public Page<DeckWinRateDTO> getDeckWinRates(String start, String end, double minWinRate, Pageable pageable) {
+        List<Battle> battles = findBattlesInDateRange(start, end);
+        Map<List<String>, DeckStats> deckStatsMap = calculateDeckStatistics(battles);
+        List<DeckWinRateDTO> allResults = processAndFilterResults(deckStatsMap, minWinRate);
+        return paginateResults(allResults, pageable);
+    }
+
+    private List<Battle> findBattlesInDateRange(String start, String end) {
         Date startDate = Date.from(Instant.parse(start));
         Date endDate = Date.from(Instant.parse(end));
+        return battleRepository.findBattlesByTimestampRange(startDate, endDate);
+    }
 
-        // 1. Obter todas as batalhas no período
-        List<Battle> battles = battleRepository.findBattlesByTimestampRange(startDate, endDate);
-
-        // 2. Processar estatísticas dos decks
+    private Map<List<String>, DeckStats> calculateDeckStatistics(List<Battle> battles) {
         Map<List<String>, DeckStats> deckStatsMap = new HashMap<>();
 
-        for (Battle battle : battles) {
-            List<DeckEntry> players = List.of(
-                    new DeckEntry(battle.getPlayer1().getDeck(), "player1".equals(battle.getWinner())),
-                    new DeckEntry(battle.getPlayer2().getDeck(), "player2".equals(battle.getWinner()))
-            );
+        battles.forEach(battle -> {
+            processPlayerDeck(battle.getPlayer1().getDeck(), "player1".equals(battle.getWinner()), deckStatsMap);
+            processPlayerDeck(battle.getPlayer2().getDeck(), "player2".equals(battle.getWinner()), deckStatsMap);
+        });
 
-            for (DeckEntry entry : players) {
-                List<String> sortedDeck = new ArrayList<>(entry.getDeck());
-                Collections.sort(sortedDeck);
+        return deckStatsMap;
+    }
 
-                DeckStats stats = deckStatsMap.computeIfAbsent(
-                        sortedDeck,
-                        k -> new DeckStats(sortedDeck, 0, 0, 0.0)
-                );
+    private void processPlayerDeck(List<String> deck, boolean won, Map<List<String>, DeckStats> deckStatsMap) {
+        List<String> sortedDeck = new ArrayList<>(deck);
+        Collections.sort(sortedDeck);
 
-                stats.setTotalMatches(stats.getTotalMatches() + 1);
-                if (entry.isWon()) {
-                    stats.setTotalWins(stats.getTotalWins() + 1);
-                }
-            }
+        DeckStats stats = deckStatsMap.computeIfAbsent(
+                sortedDeck,
+                k -> new DeckStats(sortedDeck, 0, 0, 0.0)
+        );
+
+        stats.setTotalMatches(stats.getTotalMatches() + 1);
+        if (won) {
+            stats.setTotalWins(stats.getTotalWins() + 1);
         }
+    }
 
-        // 3. Converter e filtrar os resultados
-        List<DeckWinRateDTO> allResults = deckStatsMap.values().stream()
-                .peek(stats -> {
-                    double winPercentage = stats.getTotalMatches() > 0
-                            ? (stats.getTotalWins() * 100.0) / stats.getTotalMatches()
-                            : 0.0;
-                    stats.setWinPercentage(Math.round(winPercentage * 100.0) / 100.0);
-                })
+    private List<DeckWinRateDTO> processAndFilterResults(Map<List<String>, DeckStats> deckStatsMap, double minWinRate) {
+        return deckStatsMap.values().stream()
+                .peek(this::calculateWinPercentage)
                 .filter(stats -> stats.getWinPercentage() >= minWinRate)
                 .sorted(Comparator.comparingDouble(DeckStats::getWinPercentage).reversed())
-                .map(stats -> new DeckWinRateDTO(
-                        stats.getDeck(),
-                        stats.getTotalMatches(),
-                        stats.getTotalWins(),
-                        stats.getWinPercentage()
-                ))
+                .map(this::mapToDeckWinRateDTO)
                 .collect(Collectors.toList());
+    }
 
-        // 4. Aplicar paginação manual (renomeando a variável 'end' para 'endIndex')
+    private void calculateWinPercentage(DeckStats stats) {
+        double winPercentage = stats.getTotalMatches() > 0
+                ? (stats.getTotalWins() * 100.0) / stats.getTotalMatches()
+                : 0.0;
+        stats.setWinPercentage(Math.round(winPercentage * 100.0) / 100.0);
+    }
+
+    private DeckWinRateDTO mapToDeckWinRateDTO(DeckStats stats) {
+        return new DeckWinRateDTO(
+                stats.getDeck(),
+                stats.getTotalMatches(),
+                stats.getTotalWins(),
+                stats.getWinPercentage()
+        );
+    }
+
+    private Page<DeckWinRateDTO> paginateResults(List<DeckWinRateDTO> allResults, Pageable pageable) {
         int totalElements = allResults.size();
         int startIndex = (int) pageable.getOffset();
         int endIndex = Math.min((startIndex + pageable.getPageSize()), totalElements);
 
         List<DeckWinRateDTO> pageContent = allResults.subList(startIndex, endIndex);
 
-        return new PageImpl<>(
-                pageContent,
-                pageable,
-                totalElements
-        );
+        return new PageImpl<>(pageContent, pageable, totalElements);
     }
-
 
 
     public long calculateDefeatsByCardCombo(String start, String end, List<String> cardCombo) {

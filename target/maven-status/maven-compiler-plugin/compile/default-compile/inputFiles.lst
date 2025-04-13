@@ -9,6 +9,7 @@
 /Users/miguelamaral/Documents/dev/api-clash-heuryk/src/main/java/br/com/clashproject/domain/dtos/ComboStats.java
 /Users/miguelamaral/Documents/dev/api-clash-heuryk/src/main/java/br/com/clashproject/domain/dtos/DeckWinRateDTO.java
 /Users/miguelamaral/Documents/dev/api-clash-heuryk/src/main/java/br/com/clashproject/domain/dtos/DeckEntry.java
+/Users/miguelamaral/Documents/dev/api-clash-heuryk/src/main/java/br/com/clashproject/domain/dtos/BattleResponseDTO.java
 /Users/miguelamaral/Documents/dev/api-clash-heuryk/src/main/java/br/com/clashproject/domain/dtos/BattleCreateDTO.java
 /Users/miguelamaral/Documents/dev/api-clash-heuryk/src/main/java/br/com/clashproject/domain/BattleMapper.java
 /Users/miguelamaral/Documents/dev/api-clash-heuryk/src/main/java/br/com/clashproject/domain/dtos/BattleStats.java

@@ -13,6 +13,7 @@ br/com/clashproject/domain/entities/Player$PlayerBuilder.class
 br/com/clashproject/domain/dtos/DeckWinRateDTO.class
 br/com/clashproject/domain/dtos/ComboStats.class
 br/com/clashproject/domain/dtos/DeckEntry.class
+br/com/clashproject/domain/dtos/BattleResponseDTO.class
 br/com/clashproject/domain/BattleMapperImpl.class
 br/com/clashproject/domain/entities/Battle$BattleBuilder.class
 br/com/clashproject/domain/dtos/PlayerDTO.class
