@@ -1,4 +1,4 @@
-package br.com.clashproject.domain.entities;
+package br.com.clashproject.core.entities;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

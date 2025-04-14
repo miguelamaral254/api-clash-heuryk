@@ -13,7 +13,6 @@ public interface BaseMapper<E, D> {
     D toDto(E entity);
     E toEntity(D dto);
 
-    // Conversões para coleções
     default List<D> toDto(Collection<E> entities) {
         return entities.stream().map(this::toDto).toList();
     }
@@ -22,7 +21,6 @@ public interface BaseMapper<E, D> {
         return dtos.stream().map(this::toEntity).toList();
     }
 
-    // Conversões para páginas
     default Page<D> toDto(Page<E> entities) {
         return entities.map(this::toDto);
     }
@@ -31,7 +29,6 @@ public interface BaseMapper<E, D> {
         return dtos.map(this::toEntity);
     }
 
-    // Atualização parcial de entidades
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateFromDto(D dto, @MappingTarget E entity);
 }

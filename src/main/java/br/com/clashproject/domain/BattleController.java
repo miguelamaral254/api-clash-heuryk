@@ -1,19 +1,20 @@
 package br.com.clashproject.domain;
 
 
+import br.com.clashproject.core.entities.Battle;
+import br.com.clashproject.core.entities.BattleStats;
+import br.com.clashproject.core.entities.ComboStats;
+import br.com.clashproject.core.entities.DeckWinRate;
 import br.com.clashproject.domain.dtos.*;
-import br.com.clashproject.domain.entities.Battle;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-
 import java.net.URI;
 import java.util.List;
 
@@ -32,13 +33,18 @@ public class BattleController {
             @RequestParam(defaultValue = "timestamp,desc") String[] sort) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(sort));
-        return ResponseEntity.ok(battleService.getAllBattles(pageable));
+        Page<Battle> battles = battleService.getAllBattles(pageable);
+        Page<BattleResponseDTO> battleResponseDTOs = battleMapper.toDto(battles);
+
+        return ResponseEntity.ok(battleResponseDTOs);
     }
+
     @PostMapping
     public ResponseEntity<Void> createBattle(
             @Valid @RequestBody BattleCreateDTO battleCreateDTO) {
 
-        Battle savedBattle = battleService.createBattle(battleCreateDTO);
+        Battle battle = battleMapper.toEntityFromCreateDTO(battleCreateDTO);
+        Battle savedBattle = battleService.createBattle(battle);
 
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
@@ -48,15 +54,18 @@ public class BattleController {
 
         return ResponseEntity.created(location).build();
     }
+
     @GetMapping("/stats")
-    public ResponseEntity<BattleStats> getBattleStatsByCard(
+    public ResponseEntity<BattleStatsDTO> getBattleStatsByCard(
             @RequestParam String start,
             @RequestParam String end,
             @RequestParam String cardName) {
         BattleStats stats = battleService.calculateWinLossPercentage(start, end, cardName);
-        return ResponseEntity.ok(stats);
-    }
 
+        BattleStatsDTO statsDTO = battleMapper.toBattleStatsDTO(stats);
+
+        return ResponseEntity.ok(statsDTO);
+    }
     @GetMapping("/decks/winrates")
     public ResponseEntity<Page<DeckWinRateDTO>> getDecksByWinRate(
             @RequestParam String start,
@@ -67,7 +76,12 @@ public class BattleController {
             @RequestParam(defaultValue = "winPercentage,desc") String[] sort) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(sort));
-        return ResponseEntity.ok(battleService.getDeckWinRates(start, end, minWinRate, pageable));
+
+        Page<DeckWinRate> deckWinRatePage = battleService.getDeckWinRates(start, end, minWinRate, pageable);
+
+        Page<DeckWinRateDTO> deckWinRateDTOs = deckWinRatePage.map(deckWinRate -> battleMapper.toDeckWinRateDTO(deckWinRate));
+
+        return ResponseEntity.ok(deckWinRateDTOs);
     }
 
     @GetMapping("/defeats")
@@ -79,7 +93,6 @@ public class BattleController {
         long defeats = battleService.calculateDefeatsByCardCombo(start, end, cardCombo);
         return ResponseEntity.ok(defeats);
     }
-
     @GetMapping("/victories")
     public ResponseEntity<Long> getVictoriesWithConditions(
             @RequestParam String start,
@@ -90,22 +103,22 @@ public class BattleController {
         long victories = battleService.calculateVictoriesWithConditions(start, end, cardCombo, trophyPercentage);
         return ResponseEntity.ok(victories);
     }
+
     @GetMapping("/combo-stats")
-    public ResponseEntity<List<ComboStats>> getComboStats(
+    public ResponseEntity<Page<ComboStatsDTO>> getComboStats(
             @RequestParam String start,
             @RequestParam String end,
             @RequestParam(defaultValue = "8") int deckSize,
             @RequestParam(defaultValue = "4") int comboSize,
-            @RequestParam(defaultValue = "50") double minWinPercentage) {
+            @RequestParam(defaultValue = "50") double minWinPercentage,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "winPercentage,desc") String[] sort) {
 
-        List<ComboStats> stats = battleService.getComboStats(
-                start,
-                end,
-                deckSize,
-                comboSize,
-                minWinPercentage
-        );
-        return ResponseEntity.ok(stats);
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sort));
+        Page<ComboStats> comboStatsPage = battleService.getComboStats(start, end, deckSize, comboSize, minWinPercentage, pageable);
+        Page<ComboStatsDTO> comboStatsDTOs = battleMapper.toComboStatsDTOPage(comboStatsPage);
+
+        return ResponseEntity.ok(comboStatsDTOs);
     }
-
 }

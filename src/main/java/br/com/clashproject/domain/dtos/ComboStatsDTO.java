@@ -1,21 +1,23 @@
 package br.com.clashproject.domain.dtos;
 
-
 import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
 
-public record PlayerDTO(
+public record ComboStatsDTO(
 
         @NotNull
-        String nickname,
+        List<String> combo,
 
         @NotNull
-        int trophies,
+        int totalMatches,
 
         @NotNull
-        int level,
+        int totalWins,
 
         @NotNull
-        List<String> deck
+        int totalLosses,
+
+        @NotNull
+        double winPercentage
 ) {}

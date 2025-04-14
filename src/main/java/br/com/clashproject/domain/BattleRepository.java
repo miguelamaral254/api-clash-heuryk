@@ -1,7 +1,7 @@
 package br.com.clashproject.domain;
 
-import br.com.clashproject.domain.dtos.ComboStats;
-import br.com.clashproject.domain.entities.Battle;
+import br.com.clashproject.core.entities.ComboStats;
+import br.com.clashproject.core.entities.Battle;
 import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;

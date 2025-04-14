@@ -1,6 +1,7 @@
-package br.com.clashproject.domain.entities;
+package br.com.clashproject.core.entities;
 
 
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,10 +17,19 @@ import java.time.Instant;
 @AllArgsConstructor
 @NoArgsConstructor
 public class Battle {
+
     @Id
     private String id;
+
+    @NotNull
     private Instant timestamp;
+
+    @NotNull
     private Player player1;
+
+    @NotNull
     private Player player2;
+
+    @NotNull
     private String winner;
 }

@@ -14,5 +14,6 @@ public record BattleCreateDTO(
         PlayerDTO player2,
 
         @NotBlank(message = "Winner é obrigatório")
+        @Valid
         String winner
 ) {}

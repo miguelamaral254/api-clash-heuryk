@@ -1,29 +1,35 @@
 package br.com.clashproject.domain;
 
-import br.com.clashproject.domain.dtos.BattleCreateDTO;
-import br.com.clashproject.domain.dtos.BattleResponseDTO;
-import br.com.clashproject.domain.dtos.PlayerDTO;
-import br.com.clashproject.domain.entities.Battle;
-import br.com.clashproject.domain.entities.Player;
+import br.com.clashproject.core.BaseMapper;
+import br.com.clashproject.core.entities.*;
+import br.com.clashproject.domain.dtos.*;
 import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import org.mapstruct.Named;
 import org.springframework.data.domain.Page;
 
 @Mapper(componentModel = "spring")
-public interface BattleMapper {
+public interface BattleMapper extends BaseMapper<Battle, BattleResponseDTO> {
 
-    @Mapping(target = "player1", source = "player1")
-    @Mapping(target = "player2", source = "player2")
-    BattleResponseDTO toResponseDTO(Battle battle);
 
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "timestamp", ignore = true)
-    @Mapping(target = "player1", source = "player1", qualifiedByName = "mapPlayer")
-    @Mapping(target = "player2", source = "player2", qualifiedByName = "mapPlayer")
-    Battle toEntityFromCreateDTO(BattleCreateDTO dto);
+    // Mapeamento de ComboStats para ComboStatsDTO
+    ComboStatsDTO toComboStatsDTO(ComboStats comboStats);
 
-    @Named("mapPlayer")
+    // Mapeamento de ComboStatsDTO para ComboStats
+    ComboStats toComboStats(ComboStatsDTO comboStatsDTO);
+
+    Battle toEntityFromCreateDTO(BattleCreateDTO battleCreateDTO);
+
+    BattleStatsDTO toBattleStatsDTO(BattleStats battleStats);
+
+    DeckWinRateDTO toDeckWinRateDTO(DeckWinRate deckWinRate);
+
+    default Page<BattleResponseDTO> toResponsePage(Page<Battle> page) {
+        return page.map(this::toDto);
+    }
+
+    default Page<ComboStatsDTO> toComboStatsDTOPage(Page<ComboStats> page) {
+        return page.map(this::toComboStatsDTO);
+    }
+
     default Player mapPlayer(PlayerDTO dto) {
         return Player.builder()
                 .nickname(dto.nickname())
@@ -32,9 +38,5 @@ public interface BattleMapper {
                 .towersDestroyed(0)
                 .deck(dto.deck())
                 .build();
-    }
-
-    default Page<BattleResponseDTO> toResponsePage(Page<Battle> page) {
-        return page.map(this::toResponseDTO);
     }
 }
