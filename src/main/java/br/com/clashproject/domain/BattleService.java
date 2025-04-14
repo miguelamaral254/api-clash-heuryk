@@ -1,5 +1,6 @@
 package br.com.clashproject.domain;
 
+import br.com.clashproject.core.BusinessException;
 import br.com.clashproject.core.entities.Battle;
 import br.com.clashproject.core.entities.BattleStats;
 import br.com.clashproject.core.entities.ComboStats;
@@ -23,54 +24,70 @@ public class BattleService {
 
     @Transactional(readOnly = true)
     public Page<Battle> getAllBattles(Pageable pageable) {
-        return battleRepository.findAll(pageable);
+        try {
+            return battleRepository.findAll(pageable);
+        } catch (Exception e) {
+            throw new BusinessException(BattleExceptionCodeEnum.BATTLE_IS_EMPTY);
+        }
     }
-
     @Transactional
     public Battle createBattle(Battle battle) {
-        battle.setTimestamp(Instant.now());
-        return battleRepository.save(battle);
+        try {
+            battle.setTimestamp(Instant.now());
+            return battleRepository.save(battle);
+        } catch (Exception e) {
+            throw new BusinessException(BattleExceptionCodeEnum.BATTLE_NOT_FOUND);
+        }
     }
+
 
     @Transactional(readOnly = true)
     public BattleStats calculateWinLossPercentage(String start, String end, String cardName) {
-        Date startDate = Date.from(Instant.parse(start));
-        Date endDate = Date.from(Instant.parse(end));
+        try {
+            Date startDate = Date.from(Instant.parse(start));
+            Date endDate = Date.from(Instant.parse(end));
 
-        List<Battle> battles = battleRepository.findBattlesByCardAndTimestampRange(startDate, endDate, cardName);
+            List<Battle> battles = battleRepository.findBattlesByCardAndTimestampRange(startDate, endDate, cardName);
 
-        int totalMatches = battles.size();
-        int totalWins = 0;
-        int totalLosses = 0;
+            int totalMatches = battles.size();
+            int totalWins = 0;
+            int totalLosses = 0;
 
-        for (Battle battle : battles) {
-            boolean player1UsedCard = battle.getPlayer1().getDeck().contains(cardName);
-            boolean player2UsedCard = battle.getPlayer2().getDeck().contains(cardName);
+            for (Battle battle : battles) {
+                boolean player1UsedCard = battle.getPlayer1().getDeck().contains(cardName);
+                boolean player2UsedCard = battle.getPlayer2().getDeck().contains(cardName);
 
-            if (battle.getWinner().equals("player1") && player1UsedCard) {
-                totalWins++;
-            } else if (battle.getWinner().equals("player2") && player2UsedCard) {
-                totalWins++;
-            } else if (battle.getWinner().equals("player1") && player2UsedCard) {
-                totalLosses++;
-            } else if (battle.getWinner().equals("player2") && player1UsedCard) {
-                totalLosses++;
+                if (battle.getWinner().equals("player1") && player1UsedCard) {
+                    totalWins++;
+                } else if (battle.getWinner().equals("player2") && player2UsedCard) {
+                    totalWins++;
+                } else if (battle.getWinner().equals("player1") && player2UsedCard) {
+                    totalLosses++;
+                } else if (battle.getWinner().equals("player2") && player1UsedCard) {
+                    totalLosses++;
+                }
             }
+
+            double winPercentage = totalMatches > 0 ? (totalWins * 100.0) / totalMatches : 0.0;
+            double lossPercentage = totalMatches > 0 ? (totalLosses * 100.0) / totalMatches : 0.0;
+
+            return new BattleStats(totalMatches, totalWins, totalLosses, winPercentage, lossPercentage);
+        } catch (Exception e) {
+            throw new BusinessException(BattleExceptionCodeEnum.WIN_RATE_CALCULATION_ERROR);
         }
-
-        double winPercentage = totalMatches > 0 ? (totalWins * 100.0) / totalMatches : 0.0;
-        double lossPercentage = totalMatches > 0 ? (totalLosses * 100.0) / totalMatches : 0.0;
-
-        return new BattleStats(totalMatches, totalWins, totalLosses, winPercentage, lossPercentage);
     }
 
     @Transactional(readOnly = true)
     public Page<DeckWinRate> getDeckWinRates(String start, String end, double minWinRate, Pageable pageable) {
-        List<Battle> battles = findBattlesInDateRange(start, end);
-        Map<List<String>, DeckWinRate> deckWinRateMap = calculateDeckWinRateStatistics(battles);
-        List<DeckWinRate> filteredResults = processAndFilterDeckWinRateResults(deckWinRateMap, minWinRate);
+        try {
+            List<Battle> battles = findBattlesInDateRange(start, end);
+            Map<List<String>, DeckWinRate> deckWinRateMap = calculateDeckWinRateStatistics(battles);
+            List<DeckWinRate> filteredResults = processAndFilterDeckWinRateResults(deckWinRateMap, minWinRate);
 
-        return paginateResults(filteredResults, pageable);
+            return paginateResults(filteredResults, pageable);
+        } catch (Exception e) {
+            throw new BusinessException(BattleExceptionCodeEnum.WIN_RATE_CALCULATION_ERROR);
+        }
     }
 
     private List<Battle> findBattlesInDateRange(String start, String end) {
@@ -133,55 +150,67 @@ public class BattleService {
 
     @Transactional(readOnly = true)
     public long calculateDefeatsByCardCombo(String start, String end, List<String> cardCombo) {
-        Date startDate = Date.from(Instant.parse(start));
-        Date endDate = Date.from(Instant.parse(end));
+        try {
+            Date startDate = Date.from(Instant.parse(start));
+            Date endDate = Date.from(Instant.parse(end));
 
-        return battleRepository.countDefeatsByCardComboAndTimestampRange(startDate, endDate, cardCombo);
+            return battleRepository.countDefeatsByCardComboAndTimestampRange(startDate, endDate, cardCombo);
+        } catch (Exception e) {
+            throw new BusinessException(BattleExceptionCodeEnum.WIN_RATE_CALCULATION_ERROR);
+        }
     }
 
     @Transactional(readOnly = true)
     public long calculateVictoriesWithConditions(String start, String end, List<String> cardCombo, int trophyPercentage) {
-        Date startDate = Date.from(Instant.parse(start));
-        Date endDate = Date.from(Instant.parse(end));
+        try {
+            Date startDate = Date.from(Instant.parse(start));
+            Date endDate = Date.from(Instant.parse(end));
 
-        List<Long> result = battleRepository.countVictoriesWithConditions(startDate, endDate, cardCombo, trophyPercentage);
+            List<Long> result = battleRepository.countVictoriesWithConditions(startDate, endDate, cardCombo, trophyPercentage);
 
-        if (result != null && !result.isEmpty()) {
-            return result.get(0);
+            if (result != null && !result.isEmpty()) {
+                return result.get(0);
+            }
+
+            return 0;
+        } catch (Exception e) {
+            throw new BusinessException(BattleExceptionCodeEnum.WIN_RATE_CALCULATION_ERROR);
         }
-
-        return 0;
     }
-
     @Transactional(readOnly = true)
     public Page<ComboStats> getComboStats(String start, String end, int deckSize, int comboSize, double minWinPercentage, Pageable pageable) {
-        Date startDate = Date.from(Instant.parse(start));
-        Date endDate = Date.from(Instant.parse(end));
+        try {
+            Date startDate = Date.from(Instant.parse(start));
+            Date endDate = Date.from(Instant.parse(end));
 
-        if (comboSize <= 0 || comboSize > 8) {
-            throw new IllegalArgumentException("O tamanho do combo deve estar entre 1 e 8");
+            // Verificação do comboSize com exceção personalizada
+            if (comboSize <= 0 || comboSize > 8) {
+                throw new BusinessException(BattleExceptionCodeEnum.INVALID_COMBO);
+            }
+
+            if (minWinPercentage < 0 || minWinPercentage > 100) {
+                throw new BusinessException(BattleExceptionCodeEnum.INVALID_WIN_PERCENTAGE);
+            }
+
+            // Recuperação das estatísticas dos combos
+            List<ComboStats> comboStatsList = battleRepository.findComboStats(
+                    startDate,
+                    endDate,
+                    deckSize,
+                    comboSize,
+                    minWinPercentage
+            );
+
+            int totalElements = comboStatsList.size();
+            int startIndex = (int) pageable.getOffset();
+            int endIndex = Math.min((startIndex + pageable.getPageSize()), totalElements);
+
+            List<ComboStats> pageContent = comboStatsList.subList(startIndex, endIndex);
+
+            return new PageImpl<>(pageContent, pageable, totalElements);
+        } catch (Exception e) {
+            throw new BusinessException(BattleExceptionCodeEnum.WIN_RATE_CALCULATION_ERROR);
         }
-
-        if (minWinPercentage < 0 || minWinPercentage > 100) {
-            throw new IllegalArgumentException("A porcentagem mínima de vitórias deve estar entre 0 e 100");
-        }
-
-        List<ComboStats> comboStatsList = battleRepository.findComboStats(
-                startDate,
-                endDate,
-                deckSize,
-                comboSize,
-                minWinPercentage
-        );
-
-        int totalElements = comboStatsList.size();
-        int startIndex = (int) pageable.getOffset();
-        int endIndex = Math.min((startIndex + pageable.getPageSize()), totalElements);
-
-        List<ComboStats> pageContent = comboStatsList.subList(startIndex, endIndex);
-
-        return new PageImpl<>(pageContent, pageable, totalElements);
     }
-
 
 }
