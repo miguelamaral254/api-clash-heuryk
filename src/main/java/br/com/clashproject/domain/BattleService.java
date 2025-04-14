@@ -9,6 +9,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -19,15 +21,18 @@ public class BattleService {
 
     private final BattleRepository battleRepository;
 
+    @Transactional(readOnly = true)
     public Page<Battle> getAllBattles(Pageable pageable) {
         return battleRepository.findAll(pageable);
     }
 
+    @Transactional
     public Battle createBattle(Battle battle) {
         battle.setTimestamp(Instant.now());
         return battleRepository.save(battle);
     }
 
+    @Transactional(readOnly = true)
     public BattleStats calculateWinLossPercentage(String start, String end, String cardName) {
         Date startDate = Date.from(Instant.parse(start));
         Date endDate = Date.from(Instant.parse(end));
@@ -59,7 +64,7 @@ public class BattleService {
         return new BattleStats(totalMatches, totalWins, totalLosses, winPercentage, lossPercentage);
     }
 
-
+    @Transactional(readOnly = true)
     public Page<DeckWinRate> getDeckWinRates(String start, String end, double minWinRate, Pageable pageable) {
         List<Battle> battles = findBattlesInDateRange(start, end);
         Map<List<String>, DeckWinRate> deckWinRateMap = calculateDeckWinRateStatistics(battles);
@@ -126,6 +131,7 @@ public class BattleService {
         return new PageImpl<>(pageContent, pageable, totalElements);
     }
 
+    @Transactional(readOnly = true)
     public long calculateDefeatsByCardCombo(String start, String end, List<String> cardCombo) {
         Date startDate = Date.from(Instant.parse(start));
         Date endDate = Date.from(Instant.parse(end));
@@ -133,6 +139,7 @@ public class BattleService {
         return battleRepository.countDefeatsByCardComboAndTimestampRange(startDate, endDate, cardCombo);
     }
 
+    @Transactional(readOnly = true)
     public long calculateVictoriesWithConditions(String start, String end, List<String> cardCombo, int trophyPercentage) {
         Date startDate = Date.from(Instant.parse(start));
         Date endDate = Date.from(Instant.parse(end));
@@ -146,6 +153,7 @@ public class BattleService {
         return 0;
     }
 
+    @Transactional(readOnly = true)
     public Page<ComboStats> getComboStats(String start, String end, int deckSize, int comboSize, double minWinPercentage, Pageable pageable) {
         Date startDate = Date.from(Instant.parse(start));
         Date endDate = Date.from(Instant.parse(end));
