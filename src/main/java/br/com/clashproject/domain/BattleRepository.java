@@ -159,14 +159,25 @@ public interface BattleRepository extends MongoRepository<Battle, String> {
 
     // lista de cartas que aparecem nos decks vencedores low elo
     @Aggregation(pipeline = {
-            "{ $addFields: { averageLevel: { $avg: ['$player1.level', '$player2.level'] } } }",
-            "{ $match: { averageLevel: { $lt: ?0 }, timestamp: { $gte: ?1, $lte: ?2 } } }",
-            "{ $project: { winningDeck: { $cond: { if: { $eq: ['$winner', 'player1'] }, then: '$player1.deck', else: '$player2.deck' } } } }",
+            "{ $match: { " +
+                    "$or: [ " +
+                    "{ 'player1.trophies': { $gte: ?0, $lte: ?1 } }, " +
+                    "{ 'player2.trophies': { $gte: ?0, $lte: ?1 } } ], " +
+                    "timestamp: { $gte: ?2, $lte: ?3 } } }",
+            "{ $project: { " +
+                    "winningDeck: { $cond: { if: { $eq: ['$winner', 'player1'] }, then: { $ifNull: ['$player1.deck', []] }, else: { $ifNull: ['$player2.deck', []] } } } " +
+                    "} }",
             "{ $unwind: '$winningDeck' }",
-            "{ $group: { _id: '$winningDeck', count: { $sum: 1 } } }",
-            "{ $sort: { count: -1 } }"
+            "{ $group: { " +
+                    "_id: null, " +  // Agrupar por null para retornar os decks
+                    "cards: { $push: '$winningDeck' } " +  // Coletando os decks vencedores
+                    "} }",
+            "{ $project: { " +
+                    "cards: 1, " +
+                    "_id: 0 " +  // Excluindo o _id
+                    "} }"
     })
-    List<DeckWinRateLowElo> findDecksPerLowLevel(double maxAvgLevel, Date start, Date end);
+    List<DeckWinRateLowElo> findDecksPerTrophies(int minTrophies, int maxTrophies, Date start, Date end);
 
     // Cartas mais presentes em decks derrotados (armadilha)
     @Aggregation(pipeline = {

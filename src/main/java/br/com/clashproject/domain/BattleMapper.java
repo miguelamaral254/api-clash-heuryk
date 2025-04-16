@@ -10,10 +10,8 @@ import org.springframework.data.domain.Page;
 public interface BattleMapper extends BaseMapper<Battle, BattleResponseDTO> {
 
 
-    // Mapeamento de ComboStats para ComboStatsDTO
     ComboStatsDTO toComboStatsDTO(ComboStats comboStats);
 
-    // Mapeamento de ComboStatsDTO para ComboStats
     ComboStats toComboStats(ComboStatsDTO comboStatsDTO);
 
     Battle toEntityFromCreateDTO(BattleCreateDTO battleCreateDTO);
@@ -21,6 +19,8 @@ public interface BattleMapper extends BaseMapper<Battle, BattleResponseDTO> {
     BattleStatsDTO toBattleStatsDTO(BattleStats battleStats);
 
     DeckWinRateDTO toDeckWinRateDTO(DeckWinRate deckWinRate);
+
+    DeckWinRateLowEloDTO toDeckWinRateLowEloDTO(DeckWinRateLowElo deckWinRateLowElo);
 
     BetterWinrateCardLowLevelDTO toBetterWinrateCardLowLevelDTO(DeckWinRateLowElo deckWinRateLowElo);
 
@@ -33,6 +33,8 @@ public interface BattleMapper extends BaseMapper<Battle, BattleResponseDTO> {
     default Page<ComboStatsDTO> toComboStatsDTOPage(Page<ComboStats> page) {
         return page.map(this::toComboStatsDTO);
     }
+
+    default Page<DeckWinRateLowEloDTO> toDeckWinRateLowEloDTOPage(Page<DeckWinRateLowElo> page) {return page.map(this::toDeckWinRateLowEloDTO);}
 
     default Player mapPlayer(PlayerDTO dto) {
         return Player.builder()

@@ -214,12 +214,26 @@ public class BattleService {
 
     // identificar as cartas que apresentam uma taxa de vitória anormalmente alta ou baixa quando usadas em decks com nível médio dos jogadores abaixo de N.
     @Transactional(readOnly = true)
-    public Page<DeckWinRateLowElo> getDecksPerLowLevel(String start, String end, double maxAvgLevel, Pageable pageable) {
+    public Page<DeckWinRateLowElo> getDeckWinRatesPerLowLevel(
+            String start,
+            String end,
+            Arena arena, // Arena de 1 a 13
+            Pageable pageable) {
         try {
             Date startDate = Date.from(Instant.parse(start));
             Date endDate = Date.from(Instant.parse(end));
 
-            List<DeckWinRateLowElo> rawResults = battleRepository.findDecksPerLowLevel(maxAvgLevel, startDate, endDate);
+            // Calcular minTrophies e maxTrophies com base na Arena
+            int minTrophies = arena.getMinTrophies();
+            int maxTrophies = arena.getMaxTrophies();
+
+            System.out.println("Arena: " + arena.name() + " - Min Trophies: " + minTrophies + " - Max Trophies: " + maxTrophies);
+            System.out.println("Start Date: " + startDate);
+            System.out.println("End Date: " + endDate);
+
+            // Passando minTrophies e maxTrophies dinâmicos para o repositório
+            List<DeckWinRateLowElo> rawResults = battleRepository.findDecksPerTrophies(minTrophies, maxTrophies, startDate, endDate);
+            System.out.println("Raw Results: " + rawResults.size() + " items found.");
 
             int totalElements = rawResults.size();
             int startIndex = (int) pageable.getOffset();
@@ -229,11 +243,11 @@ public class BattleService {
             return new PageImpl<>(pageContent, pageable, totalElements);
 
         } catch (Exception e) {
+            e.printStackTrace(); // Logando o stack trace completo da exceção
             throw new BusinessException(BattleExceptionCodeEnum.WIN_RATE_CALCULATION_ERROR);
         }
     }
 
-    // identificar a carta com taxa de winrate anormalmente baixa
     @Transactional(readOnly = true)
     public Page<CardWinRate> getCardWorstWinRate(String start, String end, Pageable pageable) {
         try {
@@ -255,5 +269,46 @@ public class BattleService {
         }
     }
 
+    @Transactional(readOnly = true)
+    public Page<DeckWinRate> getDeckWinRatesPerArena(String start, String end, double minWinRate, String arena, Pageable pageable) {
+        try {
+            Arena selectedArena = Arena.valueOf(arena.toUpperCase());
+            int minTrophies = selectedArena.getMinTrophies();
+            int maxTrophies = selectedArena.getMaxTrophies();
 
+            List<Battle> battles = findBattlesInDateRange(start, end);
+
+            Map<List<String>, DeckWinRate> deckWinRateMap = calculateDeckWinRateStatistics(battles, minTrophies, maxTrophies);
+
+            List<DeckWinRate> filteredResults = processAndFilterDeckWinRateResults(deckWinRateMap, minWinRate);
+
+            return paginateResults(filteredResults, pageable);
+        } catch (Exception e) {
+            throw new BusinessException(BattleExceptionCodeEnum.WIN_RATE_CALCULATION_ERROR);
+        }
+    }
+
+    private Map<List<String>, DeckWinRate> calculateDeckWinRateStatistics(List<Battle> battles, int minTrophies, int maxTrophies) {
+        Map<List<String>, DeckWinRate> deckWinRateMap = new HashMap<>();
+
+        // Processa cada batalha
+        battles.forEach(battle -> {
+            // Verifica se o jogador 1 está dentro do intervalo de troféus e processa o deck
+            if (isPlayerInTrophyRange(battle.getPlayer1().getTrophies(), minTrophies, maxTrophies)) {
+                processPlayerDeck(battle.getPlayer1().getDeck(), "player1".equals(battle.getWinner()), deckWinRateMap);
+            }
+
+            // Verifica se o jogador 2 está dentro do intervalo de troféus e processa o deck
+            if (isPlayerInTrophyRange(battle.getPlayer2().getTrophies(), minTrophies, maxTrophies)) {
+                processPlayerDeck(battle.getPlayer2().getDeck(), "player2".equals(battle.getWinner()), deckWinRateMap);
+            }
+        });
+
+        return deckWinRateMap;
+    }
+
+    // Verifica se o número de troféus do jogador está dentro da faixa
+    private boolean isPlayerInTrophyRange(int trophies, int minTrophies, int maxTrophies) {
+        return trophies >= minTrophies && trophies <= maxTrophies;
+    }
 }

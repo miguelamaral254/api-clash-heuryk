@@ -1,12 +1,17 @@
 package br.com.clashproject.core.entities;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
 import java.util.List;
 
-public class DeckWinRateLowElo extends DeckWinRate{
-    private long trophies;
+@Data
+@AllArgsConstructor
+public class DeckWinRateLowElo{
 
-    public DeckWinRateLowElo(List<String> deck, int totalMatches, int totalWins, double winPercentage) {
-        super(deck, totalMatches, totalWins, winPercentage);
-    }
+    private List<String> deck;
+    private int totalMatches;
+    private int totalWins;
+    private double winPercentage;
+    private long trophies;
 }
