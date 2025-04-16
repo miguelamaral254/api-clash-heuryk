@@ -1,10 +1,7 @@
 package br.com.clashproject.domain;
 
 
-import br.com.clashproject.core.entities.Battle;
-import br.com.clashproject.core.entities.BattleStats;
-import br.com.clashproject.core.entities.ComboStats;
-import br.com.clashproject.core.entities.DeckWinRate;
+import br.com.clashproject.core.entities.*;
 import br.com.clashproject.domain.dtos.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -121,4 +118,23 @@ public class BattleController {
 
         return ResponseEntity.ok(comboStatsDTOs);
     }
+
+    // calcular os decks no lowelo
+    @GetMapping("/decks/winrates/lowlevel")
+    public ResponseEntity<Page<BetterWinrateCardLowLevelDTO>> getBetterCards(
+            @RequestParam String start,
+            @RequestParam String end,
+            @RequestParam double maxAvgLevel,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "winRate,desc") String[] sort) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sort));
+        Page<DeckWinRateLowElo> deckWinRateLowEloPage = battleService.getDecksPerLowLevel(start, end, maxAvgLevel, pageable);
+        Page<BetterWinrateCardLowLevelDTO> deckWinRateLowEloDTOs = battleMapper.toBetterWinrateCadLowLevelDTOPage(deckWinRateLowEloPage);
+
+        return ResponseEntity.ok(deckWinRateLowEloDTOs);
+    }
+
+
 }

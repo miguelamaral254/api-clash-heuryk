@@ -1,10 +1,9 @@
 package br.com.clashproject.domain;
 
 import br.com.clashproject.core.BusinessException;
-import br.com.clashproject.core.entities.Battle;
-import br.com.clashproject.core.entities.BattleStats;
-import br.com.clashproject.core.entities.ComboStats;
-import br.com.clashproject.core.entities.DeckWinRate;
+import br.com.clashproject.core.entities.*;
+import br.com.clashproject.domain.dtos.BetterWinrateCardLowLevelDTO;
+import br.com.clashproject.domain.dtos.WorstWinrateCardDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -212,5 +211,49 @@ public class BattleService {
             throw new BusinessException(BattleExceptionCodeEnum.WIN_RATE_CALCULATION_ERROR);
         }
     }
+
+    // identificar as cartas que apresentam uma taxa de vitória anormalmente alta ou baixa quando usadas em decks com nível médio dos jogadores abaixo de N.
+    @Transactional(readOnly = true)
+    public Page<DeckWinRateLowElo> getDecksPerLowLevel(String start, String end, double maxAvgLevel, Pageable pageable) {
+        try {
+            Date startDate = Date.from(Instant.parse(start));
+            Date endDate = Date.from(Instant.parse(end));
+
+            List<DeckWinRateLowElo> rawResults = battleRepository.findDecksPerLowLevel(maxAvgLevel, startDate, endDate);
+
+            int totalElements = rawResults.size();
+            int startIndex = (int) pageable.getOffset();
+            int endIndex = Math.min((startIndex + pageable.getPageSize()), totalElements);
+
+            List<DeckWinRateLowElo> pageContent = rawResults.subList(startIndex, endIndex);
+            return new PageImpl<>(pageContent, pageable, totalElements);
+
+        } catch (Exception e) {
+            throw new BusinessException(BattleExceptionCodeEnum.WIN_RATE_CALCULATION_ERROR);
+        }
+    }
+
+    // identificar a carta com taxa de winrate anormalmente baixa
+    @Transactional(readOnly = true)
+    public Page<CardWinRate> getCardWorstWinRate(String start, String end, Pageable pageable) {
+        try {
+            Date startDate = Date.from(Instant.parse(start));
+            Date endDate = Date.from(Instant.parse(end));
+
+            List<CardWinRate> rawResults = battleRepository.findWorstWinrateCard();
+
+            int totalElements = rawResults.size();
+            int startIndex = (int) pageable.getOffset();
+            int endIndex = Math.min((startIndex + pageable.getPageSize()), totalElements);
+
+            List<CardWinRate> pageContent = rawResults.subList(startIndex, endIndex);
+            return new PageImpl<>(pageContent, pageable, totalElements);
+
+        } catch (Exception e) {
+            //alterar a exceção. Não consegui implementar a exception mas deixei comentada lá
+            throw new BusinessException(BattleExceptionCodeEnum.WIN_RATE_CALCULATION_ERROR);
+        }
+    }
+
 
 }
