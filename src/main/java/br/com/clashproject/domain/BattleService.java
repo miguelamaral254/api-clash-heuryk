@@ -2,15 +2,12 @@ package br.com.clashproject.domain;
 
 import br.com.clashproject.core.BusinessException;
 import br.com.clashproject.core.entities.*;
-import br.com.clashproject.domain.dtos.BetterWinrateCardLowLevelDTO;
-import br.com.clashproject.domain.dtos.WorstWinrateCardDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -182,7 +179,6 @@ public class BattleService {
             Date startDate = Date.from(Instant.parse(start));
             Date endDate = Date.from(Instant.parse(end));
 
-            // Verificação do comboSize com exceção personalizada
             if (comboSize <= 0 || comboSize > 8) {
                 throw new BusinessException(BattleExceptionCodeEnum.INVALID_COMBO);
             }
@@ -191,7 +187,6 @@ public class BattleService {
                 throw new BusinessException(BattleExceptionCodeEnum.INVALID_WIN_PERCENTAGE);
             }
 
-            // Recuperação das estatísticas dos combos
             List<ComboStats> comboStatsList = battleRepository.findComboStats(
                     startDate,
                     endDate,
@@ -212,60 +207,22 @@ public class BattleService {
         }
     }
 
-    // identificar as cartas que apresentam uma taxa de vitória anormalmente alta ou baixa quando usadas em decks com nível médio dos jogadores abaixo de N.
     @Transactional(readOnly = true)
-    public Page<DeckWinRateLowElo> getDeckWinRatesPerLowLevel(
-            String start,
-            String end,
-            Arena arena, // Arena de 1 a 13
-            Pageable pageable) {
+    public Page<FrequentCard> getMostFrequentCardsInLostDecks(String start, String end, Pageable pageable) {
         try {
             Date startDate = Date.from(Instant.parse(start));
             Date endDate = Date.from(Instant.parse(end));
 
-            // Calcular minTrophies e maxTrophies com base na Arena
-            int minTrophies = arena.getMinTrophies();
-            int maxTrophies = arena.getMaxTrophies();
+            List<FrequentCard> frequentCardsList = battleRepository.getMostFrequentCardsInLostDecks(startDate, endDate);
 
-            System.out.println("Arena: " + arena.name() + " - Min Trophies: " + minTrophies + " - Max Trophies: " + maxTrophies);
-            System.out.println("Start Date: " + startDate);
-            System.out.println("End Date: " + endDate);
-
-            // Passando minTrophies e maxTrophies dinâmicos para o repositório
-            List<DeckWinRateLowElo> rawResults = battleRepository.findDecksPerTrophies(minTrophies, maxTrophies, startDate, endDate);
-            System.out.println("Raw Results: " + rawResults.size() + " items found.");
-
-            int totalElements = rawResults.size();
             int startIndex = (int) pageable.getOffset();
-            int endIndex = Math.min((startIndex + pageable.getPageSize()), totalElements);
+            int endIndex = Math.min(startIndex + pageable.getPageSize(), frequentCardsList.size());
 
-            List<DeckWinRateLowElo> pageContent = rawResults.subList(startIndex, endIndex);
-            return new PageImpl<>(pageContent, pageable, totalElements);
+            List<FrequentCard> pagedResults = frequentCardsList.subList(startIndex, endIndex);
 
+            return new PageImpl<>(pagedResults, pageable, frequentCardsList.size());
         } catch (Exception e) {
-            e.printStackTrace(); // Logando o stack trace completo da exceção
-            throw new BusinessException(BattleExceptionCodeEnum.WIN_RATE_CALCULATION_ERROR);
-        }
-    }
-
-    @Transactional(readOnly = true)
-    public Page<CardWinRate> getCardWorstWinRate(String start, String end, Pageable pageable) {
-        try {
-            Date startDate = Date.from(Instant.parse(start));
-            Date endDate = Date.from(Instant.parse(end));
-
-            List<CardWinRate> rawResults = battleRepository.findWorstWinrateCard();
-
-            int totalElements = rawResults.size();
-            int startIndex = (int) pageable.getOffset();
-            int endIndex = Math.min((startIndex + pageable.getPageSize()), totalElements);
-
-            List<CardWinRate> pageContent = rawResults.subList(startIndex, endIndex);
-            return new PageImpl<>(pageContent, pageable, totalElements);
-
-        } catch (Exception e) {
-            //alterar a exceção. Não consegui implementar a exception mas deixei comentada lá
-            throw new BusinessException(BattleExceptionCodeEnum.WIN_RATE_CALCULATION_ERROR);
+            throw new BusinessException(BattleExceptionCodeEnum.CARDS_RETRIEVAL_FAILED);
         }
     }
 
@@ -291,14 +248,11 @@ public class BattleService {
     private Map<List<String>, DeckWinRate> calculateDeckWinRateStatistics(List<Battle> battles, int minTrophies, int maxTrophies) {
         Map<List<String>, DeckWinRate> deckWinRateMap = new HashMap<>();
 
-        // Processa cada batalha
         battles.forEach(battle -> {
-            // Verifica se o jogador 1 está dentro do intervalo de troféus e processa o deck
             if (isPlayerInTrophyRange(battle.getPlayer1().getTrophies(), minTrophies, maxTrophies)) {
                 processPlayerDeck(battle.getPlayer1().getDeck(), "player1".equals(battle.getWinner()), deckWinRateMap);
             }
 
-            // Verifica se o jogador 2 está dentro do intervalo de troféus e processa o deck
             if (isPlayerInTrophyRange(battle.getPlayer2().getTrophies(), minTrophies, maxTrophies)) {
                 processPlayerDeck(battle.getPlayer2().getDeck(), "player2".equals(battle.getWinner()), deckWinRateMap);
             }
@@ -307,7 +261,6 @@ public class BattleService {
         return deckWinRateMap;
     }
 
-    // Verifica se o número de troféus do jogador está dentro da faixa
     private boolean isPlayerInTrophyRange(int trophies, int minTrophies, int maxTrophies) {
         return trophies >= minTrophies && trophies <= maxTrophies;
     }

@@ -4,15 +4,14 @@ import br.com.clashproject.core.entities.Battle;
 import br.com.clashproject.core.entities.BattleStats;
 import br.com.clashproject.core.entities.ComboStats;
 import br.com.clashproject.core.entities.DeckWinRate;
-import br.com.clashproject.core.entities.DeckWinRateLowElo;
+import br.com.clashproject.core.entities.FrequentCard;
 import br.com.clashproject.core.entities.Player;
 import br.com.clashproject.domain.dtos.BattleCreateDTO;
 import br.com.clashproject.domain.dtos.BattleResponseDTO;
 import br.com.clashproject.domain.dtos.BattleStatsDTO;
-import br.com.clashproject.domain.dtos.BetterWinrateCardLowLevelDTO;
 import br.com.clashproject.domain.dtos.ComboStatsDTO;
 import br.com.clashproject.domain.dtos.DeckWinRateDTO;
-import br.com.clashproject.domain.dtos.DeckWinRateLowEloDTO;
+import br.com.clashproject.domain.dtos.FrequentCardDTO;
 import br.com.clashproject.domain.dtos.PlayerDTO;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -22,7 +21,7 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-04-16T12:06:20-0300",
+    date = "2025-04-16T13:15:48-0300",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 23.0.2 (Oracle Corporation)"
 )
 @Component
@@ -200,40 +199,20 @@ public class BattleMapperImpl implements BattleMapper {
     }
 
     @Override
-    public DeckWinRateLowEloDTO toDeckWinRateLowEloDTO(DeckWinRateLowElo deckWinRateLowElo) {
-        if ( deckWinRateLowElo == null ) {
+    public FrequentCardDTO toFrequentCardDTO(FrequentCard frequentCard) {
+        if ( frequentCard == null ) {
             return null;
         }
 
-        List<String> deck = null;
-        int totalMatches = 0;
-        int totalWins = 0;
-        double winPercentage = 0.0d;
-        long trophies = 0L;
+        String card = null;
+        long count = 0L;
 
-        List<String> list = deckWinRateLowElo.getDeck();
-        if ( list != null ) {
-            deck = new ArrayList<String>( list );
-        }
-        totalMatches = deckWinRateLowElo.getTotalMatches();
-        totalWins = deckWinRateLowElo.getTotalWins();
-        winPercentage = deckWinRateLowElo.getWinPercentage();
-        trophies = deckWinRateLowElo.getTrophies();
+        card = frequentCard.getCard();
+        count = frequentCard.getCount();
 
-        DeckWinRateLowEloDTO deckWinRateLowEloDTO = new DeckWinRateLowEloDTO( deck, totalMatches, totalWins, winPercentage, trophies );
+        FrequentCardDTO frequentCardDTO = new FrequentCardDTO( card, count );
 
-        return deckWinRateLowEloDTO;
-    }
-
-    @Override
-    public BetterWinrateCardLowLevelDTO toBetterWinrateCardLowLevelDTO(DeckWinRateLowElo deckWinRateLowElo) {
-        if ( deckWinRateLowElo == null ) {
-            return null;
-        }
-
-        BetterWinrateCardLowLevelDTO betterWinrateCardLowLevelDTO = new BetterWinrateCardLowLevelDTO();
-
-        return betterWinrateCardLowLevelDTO;
+        return frequentCardDTO;
     }
 
     protected PlayerDTO playerToPlayerDTO(Player player) {

@@ -1,9 +1,7 @@
 package br.com.clashproject.domain;
 
 import br.com.clashproject.core.entities.*;
-import br.com.clashproject.domain.dtos.BetterWinrateCardLowLevelDTO;
 import br.com.clashproject.domain.dtos.CardStatsDTO;
-import br.com.clashproject.domain.dtos.WorstWinrateCardDTO;
 import org.springframework.data.mongodb.repository.Aggregation;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
@@ -11,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 @Repository
 public interface BattleRepository extends MongoRepository<Battle, String> {
@@ -82,8 +81,6 @@ public interface BattleRepository extends MongoRepository<Battle, String> {
             "{ $count: 'victories_with_conditions' }"
     })
     List<Long> countVictoriesWithConditions(Date start, Date end, List<String> cardCombo, int trophyPercentage);
-
-
 
     @Aggregation(pipeline = {
             "{ $match: { " +
@@ -157,39 +154,31 @@ public interface BattleRepository extends MongoRepository<Battle, String> {
     })
     List<ComboStats> findComboStats(Date start, Date end, int deckSize, int comboSize, double minWinPercentage);
 
-    // lista de cartas que aparecem nos decks vencedores low elo
     @Aggregation(pipeline = {
             "{ $match: { " +
-                    "$or: [ " +
-                    "{ 'player1.trophies': { $gte: ?0, $lte: ?1 } }, " +
-                    "{ 'player2.trophies': { $gte: ?0, $lte: ?1 } } ], " +
-                    "timestamp: { $gte: ?2, $lte: ?3 } } }",
-            "{ $project: { " +
-                    "winningDeck: { $cond: { if: { $eq: ['$winner', 'player1'] }, then: { $ifNull: ['$player1.deck', []] }, else: { $ifNull: ['$player2.deck', []] } } } " +
+                    "  timestamp: { $gte: ?0, $lte: ?1 }, " +
+                    "  $or: [ " +
+                    "    { 'winner': { $ne: 'player1' } }, " +
+                    "    { 'winner': { $ne: 'player2' } } " +
+                    "  ]" +
                     "} }",
-            "{ $unwind: '$winningDeck' }",
+            "{ $project: { " +
+                    "  defeatedDeck: { $cond: { if: { $eq: ['$winner', 'player1'] }, then: '$player2.deck', else: '$player1.deck' } } " +
+                    "} }",
+            "{ $unwind: '$defeatedDeck' }",
             "{ $group: { " +
-                    "_id: null, " +  // Agrupar por null para retornar os decks
-                    "cards: { $push: '$winningDeck' } " +  // Coletando os decks vencedores
+                    "  _id: '$defeatedDeck', " +
+                    "  count: { $sum: 1 }" +
                     "} }",
             "{ $project: { " +
-                    "cards: 1, " +
-                    "_id: 0 " +  // Excluindo o _id
-                    "} }"
+                    "  card: '$_id', " +
+                    "  count: 1, " +
+                    "  _id: 0 " +
+                    "} }",
+            "{ $sort: { count: -1 } }"
     })
-    List<DeckWinRateLowElo> findDecksPerTrophies(int minTrophies, int maxTrophies, Date start, Date end);
+    List<FrequentCard> getMostFrequentCardsInLostDecks(Date start, Date end);
 
-    // Cartas mais presentes em decks derrotados (armadilha)
-    @Aggregation(pipeline = {
-            "{ $project: { losingDeck: { $cond: [ { $eq: ['$winner', 'player1'] }, '$player2.deck', '$player1.deck' ] } } }",
-            "{ $unwind: '$losingDeck' }",
-            "{ $group: { _id: '$losingDeck', derrotas: { $sum: 1 } } }",
-            "{ $project: { carta: '$_id', derrotas: 1, _id: 0 } }",
-            "{ $sort: { derrotas: -1 } }"
-    })
-    List<CardWinRate> findWorstWinrateCard();
-
-    // Encontrar cartas que aparecem com mais frequência em partidas com mesmo numero de torres destruídas, pequena diferença de trofeus e resultado empatado
     @Aggregation(pipeline = {
             "{ $match: { " +
                     "    timestamp: { $gte: ?0, $lte: ?1 }, " +

@@ -9,7 +9,6 @@ import org.springframework.data.domain.Page;
 @Mapper(componentModel = "spring")
 public interface BattleMapper extends BaseMapper<Battle, BattleResponseDTO> {
 
-
     ComboStatsDTO toComboStatsDTO(ComboStats comboStats);
 
     ComboStats toComboStats(ComboStatsDTO comboStatsDTO);
@@ -20,11 +19,7 @@ public interface BattleMapper extends BaseMapper<Battle, BattleResponseDTO> {
 
     DeckWinRateDTO toDeckWinRateDTO(DeckWinRate deckWinRate);
 
-    DeckWinRateLowEloDTO toDeckWinRateLowEloDTO(DeckWinRateLowElo deckWinRateLowElo);
-
-    BetterWinrateCardLowLevelDTO toBetterWinrateCardLowLevelDTO(DeckWinRateLowElo deckWinRateLowElo);
-
-    default Page<BetterWinrateCardLowLevelDTO> toBetterWinrateCadLowLevelDTOPage(Page<DeckWinRateLowElo> page) { return page.map(this::toBetterWinrateCardLowLevelDTO); }
+    FrequentCardDTO toFrequentCardDTO(FrequentCard frequentCard);
 
     default Page<BattleResponseDTO> toResponsePage(Page<Battle> page) {
         return page.map(this::toDto);
@@ -34,7 +29,13 @@ public interface BattleMapper extends BaseMapper<Battle, BattleResponseDTO> {
         return page.map(this::toComboStatsDTO);
     }
 
-    default Page<DeckWinRateLowEloDTO> toDeckWinRateLowEloDTOPage(Page<DeckWinRateLowElo> page) {return page.map(this::toDeckWinRateLowEloDTO);}
+    default Page<DeckWinRateDTO> toDeckWinRateDTOPage(Page<DeckWinRate> page) {
+        return page.map(this::toDeckWinRateDTO);
+    }
+
+    default Page<FrequentCardDTO> toFrequentCardDTOPage(Page<FrequentCard> page) {
+        return page.map(this::toFrequentCardDTO);
+    }
 
     default Player mapPlayer(PlayerDTO dto) {
         return Player.builder()
