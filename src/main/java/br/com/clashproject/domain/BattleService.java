@@ -2,15 +2,12 @@ package br.com.clashproject.domain;
 
 import br.com.clashproject.core.BusinessException;
 import br.com.clashproject.core.entities.*;
-import br.com.clashproject.domain.dtos.BetterWinrateCardLowLevelDTO;
-import br.com.clashproject.domain.dtos.WorstWinrateCardDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -182,7 +179,6 @@ public class BattleService {
             Date startDate = Date.from(Instant.parse(start));
             Date endDate = Date.from(Instant.parse(end));
 
-            // Verificação do comboSize com exceção personalizada
             if (comboSize <= 0 || comboSize > 8) {
                 throw new BusinessException(BattleExceptionCodeEnum.INVALID_COMBO);
             }
@@ -191,7 +187,6 @@ public class BattleService {
                 throw new BusinessException(BattleExceptionCodeEnum.INVALID_WIN_PERCENTAGE);
             }
 
-            // Recuperação das estatísticas dos combos
             List<ComboStats> comboStatsList = battleRepository.findComboStats(
                     startDate,
                     endDate,
@@ -212,48 +207,61 @@ public class BattleService {
         }
     }
 
-    // identificar as cartas que apresentam uma taxa de vitória anormalmente alta ou baixa quando usadas em decks com nível médio dos jogadores abaixo de N.
     @Transactional(readOnly = true)
-    public Page<DeckWinRateLowElo> getDecksPerLowLevel(String start, String end, double maxAvgLevel, Pageable pageable) {
+    public Page<FrequentCard> getMostFrequentCardsInLostDecks(String start, String end, Pageable pageable) {
         try {
             Date startDate = Date.from(Instant.parse(start));
             Date endDate = Date.from(Instant.parse(end));
 
-            List<DeckWinRateLowElo> rawResults = battleRepository.findDecksPerLowLevel(maxAvgLevel, startDate, endDate);
+            List<FrequentCard> frequentCardsList = battleRepository.getMostFrequentCardsInLostDecks(startDate, endDate);
 
-            int totalElements = rawResults.size();
             int startIndex = (int) pageable.getOffset();
-            int endIndex = Math.min((startIndex + pageable.getPageSize()), totalElements);
+            int endIndex = Math.min(startIndex + pageable.getPageSize(), frequentCardsList.size());
 
-            List<DeckWinRateLowElo> pageContent = rawResults.subList(startIndex, endIndex);
-            return new PageImpl<>(pageContent, pageable, totalElements);
+            List<FrequentCard> pagedResults = frequentCardsList.subList(startIndex, endIndex);
 
+            return new PageImpl<>(pagedResults, pageable, frequentCardsList.size());
+        } catch (Exception e) {
+            throw new BusinessException(BattleExceptionCodeEnum.CARDS_RETRIEVAL_FAILED);
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public Page<DeckWinRate> getDeckWinRatesPerArena(String start, String end, double minWinRate, String arena, Pageable pageable) {
+        try {
+            Arena selectedArena = Arena.valueOf(arena.toUpperCase());
+            int minTrophies = selectedArena.getMinTrophies();
+            int maxTrophies = selectedArena.getMaxTrophies();
+
+            List<Battle> battles = findBattlesInDateRange(start, end);
+
+            Map<List<String>, DeckWinRate> deckWinRateMap = calculateDeckWinRateStatistics(battles, minTrophies, maxTrophies);
+
+            List<DeckWinRate> filteredResults = processAndFilterDeckWinRateResults(deckWinRateMap, minWinRate);
+
+            return paginateResults(filteredResults, pageable);
         } catch (Exception e) {
             throw new BusinessException(BattleExceptionCodeEnum.WIN_RATE_CALCULATION_ERROR);
         }
     }
 
-    // identificar a carta com taxa de winrate anormalmente baixa
-    @Transactional(readOnly = true)
-    public Page<CardWinRate> getCardWorstWinRate(String start, String end, Pageable pageable) {
-        try {
-            Date startDate = Date.from(Instant.parse(start));
-            Date endDate = Date.from(Instant.parse(end));
+    private Map<List<String>, DeckWinRate> calculateDeckWinRateStatistics(List<Battle> battles, int minTrophies, int maxTrophies) {
+        Map<List<String>, DeckWinRate> deckWinRateMap = new HashMap<>();
 
-            List<CardWinRate> rawResults = battleRepository.findWorstWinrateCard();
+        battles.forEach(battle -> {
+            if (isPlayerInTrophyRange(battle.getPlayer1().getTrophies(), minTrophies, maxTrophies)) {
+                processPlayerDeck(battle.getPlayer1().getDeck(), "player1".equals(battle.getWinner()), deckWinRateMap);
+            }
 
-            int totalElements = rawResults.size();
-            int startIndex = (int) pageable.getOffset();
-            int endIndex = Math.min((startIndex + pageable.getPageSize()), totalElements);
+            if (isPlayerInTrophyRange(battle.getPlayer2().getTrophies(), minTrophies, maxTrophies)) {
+                processPlayerDeck(battle.getPlayer2().getDeck(), "player2".equals(battle.getWinner()), deckWinRateMap);
+            }
+        });
 
-            List<CardWinRate> pageContent = rawResults.subList(startIndex, endIndex);
-            return new PageImpl<>(pageContent, pageable, totalElements);
-
-        } catch (Exception e) {
-            //alterar a exceção. Não consegui implementar a exception mas deixei comentada lá
-            throw new BusinessException(BattleExceptionCodeEnum.WIN_RATE_CALCULATION_ERROR);
-        }
+        return deckWinRateMap;
     }
 
-
+    private boolean isPlayerInTrophyRange(int trophies, int minTrophies, int maxTrophies) {
+        return trophies >= minTrophies && trophies <= maxTrophies;
+    }
 }

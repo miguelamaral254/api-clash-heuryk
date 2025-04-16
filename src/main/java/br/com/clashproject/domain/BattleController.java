@@ -13,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import java.net.URI;
+import java.time.Instant;
+import java.util.Date;
 import java.util.List;
 
 @RestController
@@ -57,8 +59,8 @@ public class BattleController {
             @RequestParam String start,
             @RequestParam String end,
             @RequestParam String cardName) {
-        BattleStats stats = battleService.calculateWinLossPercentage(start, end, cardName);
 
+        BattleStats stats = battleService.calculateWinLossPercentage(start, end, cardName);
         BattleStatsDTO statsDTO = battleMapper.toBattleStatsDTO(stats);
 
         return ResponseEntity.ok(statsDTO);
@@ -73,12 +75,42 @@ public class BattleController {
             @RequestParam(defaultValue = "winPercentage,desc") String[] sort) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by(sort));
-
         Page<DeckWinRate> deckWinRatePage = battleService.getDeckWinRates(start, end, minWinRate, pageable);
-
-        Page<DeckWinRateDTO> deckWinRateDTOs = deckWinRatePage.map(deckWinRate -> battleMapper.toDeckWinRateDTO(deckWinRate));
+        Page<DeckWinRateDTO> deckWinRateDTOs = battleMapper.toDeckWinRateDTOPage(deckWinRatePage);
 
         return ResponseEntity.ok(deckWinRateDTOs);
+    }
+
+    @GetMapping("/decks/winrates/arena")
+    public ResponseEntity<Page<DeckWinRateDTO>> getDecksByWinRatePerArena(
+            @RequestParam String start,
+            @RequestParam String end,
+            @RequestParam(defaultValue = "0") double minWinRate,
+            @RequestParam(defaultValue = "ARENA_1") String arena,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "winPercentage,desc") String[] sort) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sort));
+        Page<DeckWinRate> deckWinRatePage = battleService.getDeckWinRatesPerArena(start, end, minWinRate, arena, pageable);
+        Page<DeckWinRateDTO> deckWinRateDTOs = battleMapper.toDeckWinRateDTOPage(deckWinRatePage);
+
+        return ResponseEntity.ok(deckWinRateDTOs);
+    }
+
+    @GetMapping("/decks/winrates/mostFrequentCards")
+    public ResponseEntity<Page<FrequentCardDTO>> getMostFrequentCardsInLostDecks(
+            @RequestParam String start,
+            @RequestParam String end,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "count,desc") String[] sort) {
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sort));
+        Page<FrequentCard> frequentCardsPage = battleService.getMostFrequentCardsInLostDecks(start, end, pageable);
+        Page<FrequentCardDTO> frequentCardDTOs = battleMapper.toFrequentCardDTOPage(frequentCardsPage);
+
+        return ResponseEntity.ok(frequentCardDTOs);
     }
 
     @GetMapping("/defeats")
@@ -90,6 +122,7 @@ public class BattleController {
         long defeats = battleService.calculateDefeatsByCardCombo(start, end, cardCombo);
         return ResponseEntity.ok(defeats);
     }
+
     @GetMapping("/victories")
     public ResponseEntity<Long> getVictoriesWithConditions(
             @RequestParam String start,
@@ -118,23 +151,4 @@ public class BattleController {
 
         return ResponseEntity.ok(comboStatsDTOs);
     }
-
-    // calcular os decks no lowelo
-    @GetMapping("/decks/winrates/lowlevel")
-    public ResponseEntity<Page<BetterWinrateCardLowLevelDTO>> getBetterCards(
-            @RequestParam String start,
-            @RequestParam String end,
-            @RequestParam double maxAvgLevel,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "winRate,desc") String[] sort) {
-
-        Pageable pageable = PageRequest.of(page, size, Sort.by(sort));
-        Page<DeckWinRateLowElo> deckWinRateLowEloPage = battleService.getDecksPerLowLevel(start, end, maxAvgLevel, pageable);
-        Page<BetterWinrateCardLowLevelDTO> deckWinRateLowEloDTOs = battleMapper.toBetterWinrateCadLowLevelDTOPage(deckWinRateLowEloPage);
-
-        return ResponseEntity.ok(deckWinRateLowEloDTOs);
-    }
-
-
 }

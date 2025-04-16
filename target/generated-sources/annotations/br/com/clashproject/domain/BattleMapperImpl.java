@@ -4,12 +4,14 @@ import br.com.clashproject.core.entities.Battle;
 import br.com.clashproject.core.entities.BattleStats;
 import br.com.clashproject.core.entities.ComboStats;
 import br.com.clashproject.core.entities.DeckWinRate;
+import br.com.clashproject.core.entities.FrequentCard;
 import br.com.clashproject.core.entities.Player;
 import br.com.clashproject.domain.dtos.BattleCreateDTO;
 import br.com.clashproject.domain.dtos.BattleResponseDTO;
 import br.com.clashproject.domain.dtos.BattleStatsDTO;
 import br.com.clashproject.domain.dtos.ComboStatsDTO;
 import br.com.clashproject.domain.dtos.DeckWinRateDTO;
+import br.com.clashproject.domain.dtos.FrequentCardDTO;
 import br.com.clashproject.domain.dtos.PlayerDTO;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -19,7 +21,7 @@ import org.springframework.stereotype.Component;
 
 @Generated(
     value = "org.mapstruct.ap.MappingProcessor",
-    date = "2025-04-15T22:04:37-0300",
+    date = "2025-04-16T13:15:48-0300",
     comments = "version: 1.5.5.Final, compiler: javac, environment: Java 23.0.2 (Oracle Corporation)"
 )
 @Component
@@ -194,6 +196,23 @@ public class BattleMapperImpl implements BattleMapper {
         DeckWinRateDTO deckWinRateDTO = new DeckWinRateDTO( deck, totalMatches, totalWins, winPercentage );
 
         return deckWinRateDTO;
+    }
+
+    @Override
+    public FrequentCardDTO toFrequentCardDTO(FrequentCard frequentCard) {
+        if ( frequentCard == null ) {
+            return null;
+        }
+
+        String card = null;
+        long count = 0L;
+
+        card = frequentCard.getCard();
+        count = frequentCard.getCount();
+
+        FrequentCardDTO frequentCardDTO = new FrequentCardDTO( card, count );
+
+        return frequentCardDTO;
     }
 
     protected PlayerDTO playerToPlayerDTO(Player player) {
