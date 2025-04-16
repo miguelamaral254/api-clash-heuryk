@@ -22,6 +22,10 @@ public interface BattleMapper extends BaseMapper<Battle, BattleResponseDTO> {
 
     DeckWinRateDTO toDeckWinRateDTO(DeckWinRate deckWinRate);
 
+    BetterWinrateCardLowLevelDTO toBetterWinrateCardLowLevelDTO(DeckWinRateLowElo deckWinRateLowElo);
+
+    default Page<BetterWinrateCardLowLevelDTO> toBetterWinrateCadLowLevelDTOPage(Page<DeckWinRateLowElo> page) { return page.map(this::toBetterWinrateCardLowLevelDTO); }
+
     default Page<BattleResponseDTO> toResponsePage(Page<Battle> page) {
         return page.map(this::toDto);
     }
@@ -39,4 +43,5 @@ public interface BattleMapper extends BaseMapper<Battle, BattleResponseDTO> {
                 .deck(dto.deck())
                 .build();
     }
+
 }
