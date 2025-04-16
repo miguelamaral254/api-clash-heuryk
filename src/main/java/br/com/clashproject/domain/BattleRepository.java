@@ -28,7 +28,6 @@ public interface BattleRepository extends MongoRepository<Battle, String> {
                     "  ] " +
                     "} }",
 
-            // Agora verificamos se o jogador com o combo perdeu a partida
             "{ $match: { " +
                     "  $or: [ " +
                     "    { 'player1.deck': { $all: ?2 }, 'winner': { $ne: 'player1' } }, " +

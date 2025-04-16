@@ -50,8 +50,6 @@ Payload:
 "Tornado",
 "Mega Minion"
 ]
-},
-"winner": "player1"
 }
 
 
