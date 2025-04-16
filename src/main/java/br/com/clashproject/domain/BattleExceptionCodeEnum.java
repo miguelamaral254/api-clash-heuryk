@@ -9,6 +9,7 @@ public enum BattleExceptionCodeEnum implements ExceptionCode {
     INVALID_WIN_PERCENTAGE("Invalid win percentage, it must be between 0 and 100", "BATTLEEXCEP-003", 400),
     INVALID_COMBO("Invalid combo size", "BATTLEEXCEP-002", 400),
     WIN_RATE_CALCULATION_ERROR("Error calculating win rate", "BATTLEEXCEP-003", 500);
+    //CARD_NOT_FOUND("Card not found", "BATTLEEXCEP-404", 404);
 
     private final String message;
     private final String code;
